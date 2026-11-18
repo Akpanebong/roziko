@@ -32,11 +32,18 @@
         </details>
         <details class="user-menu">
           <summary class="user-trigger" aria-label="Open user menu">
-            <span class="whoami"><b>{{ user.display_name }}</b><span class="pill role">{{ role_label }}</span></span>
+            <span class="user-avatar" aria-hidden="true">
+              {% if user.first_name or user.last_name %}{{ user.first_name|first|upper }}
+              {{ user.last_name|first|upper }}{% else %}{{ user.username|first|upper }}{% endif %}</span>
+            <span class="whoami"><b>{{ user.display_name }}</b></span>
           </summary>
           <div class="user-dropdown">
-            <a class="btn alt sm" href="{% url 'password_change' %}">Password</a>
-            <form class="inline" method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn alt sm" type="submit">Sign out</button></form>
+            <div class="user-actions">
+              <a class="btn alt sm" href="{% url 'password_change' %}">Password</a>
+              <form class="inline" method="post" action="{% url 'logout' %}">
+                {% csrf_token %}<button class="btn alt sm" type="submit">Sign out</button></form>
+            </div>
+            <div class="user-role"><b>{{ role_label }}</b></div>
           </div>
         </details>
       </div>
