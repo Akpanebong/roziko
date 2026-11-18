@@ -1,0 +1,17 @@
+{% extends "desk/base.html" %}
+{% block title %}Sign in · Roziko Loan Desk{% endblock %}
+{% block content %}
+<div class="login-wrap">
+  <form method="post" class="card login-card" autocomplete="on">
+    {% csrf_token %}
+    <h1>Sign in</h1>
+    <p class="note" style="margin:0">Use the account your Branch Manager created for you.</p>
+    {% if form.non_field_errors %}<div class="msg error" role="alert">{{ form.non_field_errors.0 }}</div>{% endif %}
+    <div class="fld"><label for="id_username">Username</label><input class="in" type="text" name="username" id="id_username" autofocus autocomplete="username" required></div>
+    <div class="fld"><label for="id_password">Password</label><input class="in" type="password" name="password" id="id_password" autocomplete="current-password" required></div>
+    <input type="hidden" name="next" value="{{ next }}">
+    <button class="btn" type="submit">Sign in</button>
+    <p class="note" style="margin-bottom:0"><a href="{% url 'password_reset' %}">Forgot your password or username?</a></p>
+  </form>
+</div>
+{% endblock %}

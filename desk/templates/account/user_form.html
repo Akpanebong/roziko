@@ -1,0 +1,8 @@
+{% extends "desk/base.html" %}
+{% block title %}{{ title }} · Roziko Loan Desk{% endblock %}
+{% block content %}<div class="sec"><h2>{{ title }}</h2></div>
+<form method="post" class="card grid centered-form" novalidate>{% csrf_token %}{{ form.non_field_errors }}
+{% if is_new %}<div class="full note">A username and strong temporary password will be generated and emailed to the new user.</div>{% else %}<div class="fld"><label>Username</label><div><b>{{ target.username }}</b></div></div><div></div>{% endif %}
+{% include "desk/_field.html" with field=form.first_name %}{% include "desk/_field.html" with field=form.last_name %}{% include "desk/_field.html" with field=form.email %}{% include "desk/_field.html" with field=form.phone %}{% include "desk/_field.html" with field=form.role %}{% include "desk/_field.html" with field=form.branch %}{% include "desk/_field.html" with field=form.officer_name full=True %}
+{% if not is_new %}<div class="fld full checkrow">{{ form.is_active }}<label for="{{ form.is_active.id_for_label }}">Account is active (untick to block sign-in)</label></div>{% endif %}<div class="full toolbar"><button class="btn" type="submit">Save user</button><a class="btn alt" href="{% url 'dashboard' %}">Cancel</a></div></form>
+<datalist id="officers-A">{% for n in officer_lists.A %}<option value="{{ n }}">{% endfor %}</datalist><datalist id="officers-G">{% for n in officer_lists.G %}<option value="{{ n }}">{% endfor %}</datalist><datalist id="officers-ALL">{% for n in officer_lists.ALL %}<option value="{{ n }}">{% endfor %}</datalist>{% endblock %}

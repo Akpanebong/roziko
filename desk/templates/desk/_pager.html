@@ -1,0 +1,6 @@
+{% load desk_extras %}
+<div class="pager"><span>{{ total }} {{ noun|default:"loans" }} &middot; page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+  <span class="toolbar">
+    {% if page.has_previous %}<a href="{% url_with page=page.previous_page_number %}">Previous</a>{% else %}<span class="off">Previous</span>{% endif %}
+    {% if page.has_next %}<a href="{% url_with page=page.next_page_number %}">Next</a>{% else %}<span class="off">Next</span>{% endif %}
+  </span></div>

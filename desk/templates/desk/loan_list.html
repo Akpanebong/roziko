@@ -1,0 +1,24 @@
+{% extends "desk/base.html" %}
+{% load desk_extras %}
+{% block title %}Loans · Roziko Loan Desk{% endblock %}
+{% block content %}
+<form class="filters" method="get" data-autosubmit style="margin-top:14px">
+  <div class="f"><label for="lBranch">Branch</label><select id="lBranch" name="branch"><option value="All">All</option><option{% if F.branch == 'Arua' %} selected{% endif %}>Arua</option><option{% if F.branch == 'Gulu' %} selected{% endif %}>Gulu</option></select></div>
+  <div class="f"><label for="lOff">Officer</label><select id="lOff" name="officer"><option value="All">All</option>{% for v in officers %}<option{% if v == F.officer %} selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>
+  <div class="f"><label for="lFlag">Alert flag</label><select id="lFlag" name="flag"><option value="All">All</option>{% for v in flags %}<option{% if v == F.flag %} selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>
+  <div class="f"><label for="lStatus">Loan status</label><select id="lStatus" name="status"><option value="All">All</option><option{% if F.status == 'Completed' %} selected{% endif %}>Completed</option><option{% if F.status == 'Current' %} selected{% endif %}>Current</option><option{% if F.status == 'Default' %} selected{% endif %}>Default</option></select></div>
+  <div class="f wide"><label for="lQ">Search client, phone or serial no.</label><input id="lQ" type="search" name="q" value="{{ F.q }}" placeholder="Type to search, press Enter"></div>
+  <div class="f toolbar"><button class="btn" type="submit">Search</button>{% if 'export' in P %}<a class="btn alt" href="{% url 'export_loans' %}{% url_with page=None %}">Export Excel</a>{% endif %}</div>
+</form>
+<div class="tbl"><table><thead><tr>
+{% for key, label, right in cols %}
+  {% if F.sort == key %}{% if F.dir == 'asc' %}{% url_with sort=key dir='desc' page=None as href %}{% else %}{% url_with sort=key dir='asc' page=None as href %}{% endif %}{% else %}{% url_with sort=key dir=None page=None as href %}{% endif %}
+  <th class="s{% if right %} r{% endif %}" aria-sort="{% if F.sort == key %}{% if F.dir == 'asc' %}ascending{% else %}descending{% endif %}{% else %}none{% endif %}"><a href="{{ href }}">{{ label }}{% if F.sort == key %}{% if F.dir == 'asc' %} ▲{% else %} ▼{% endif %}{% endif %}</a></th>
+{% endfor %}
+</tr></thead><tbody>
+{% for l in page %}{% with x=l.x %}
+<tr class="row" data-href="{{ l.get_absolute_url }}"><td>{{ l.branch_name }}</td><td class="nm"><a class="nmlink" href="{{ l.get_absolute_url }}">{{ l.client_name }}</a></td><td>{{ x.officer }}</td><td>{{ x.issued|date:"d M Y" }}</td><td>{% if x.due %}{{ x.due|date:"d M Y" }}{% else %}<span class="note">invalid</span>{% endif %}</td><td class="r num">{{ l.principal|money }}</td><td class="r num">{{ x.td|money }}</td><td class="r num">{{ x.paid|money }}</td><td class="r num">{{ x.out|money }}</td><td class="r num">{% if x.days is not None %}{{ x.days }}{% endif %}</td><td>{% pill x.flag %}</td></tr>
+{% endwith %}{% empty %}<tr><td colspan="11"><div class="empty" style="border:0">No loans match.</div></td></tr>{% endfor %}
+</tbody></table></div>
+{% include "desk/_pager.html" %}
+{% endblock %}

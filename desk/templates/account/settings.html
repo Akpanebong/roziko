@@ -1,0 +1,8 @@
+{% extends "desk/base.html" %}{% load desk_extras %}
+{% block title %}Settings · Roziko Loan Desk{% endblock %}
+{% block content %}
+<div class="sec" style="margin-top:18px"><h2>Alert rules</h2><small>Shared by everyone who uses this system</small></div>
+<form method="post" class="card grid centered-form settings-form">{% csrf_token %}{{ form.non_field_errors }}{% for field in form %}{% include "desk/_field.html" with field=field %}{% endfor %}<div class="full"><button class="btn" type="submit">Save rules</button></div></form>
+<div class="sec"><h2>How flags work</h2></div>
+<div class="card centered-form"><ul style="margin:0;padding-left:18px;display:grid;gap:4px"><li>{% pill 'DUE SOON' %} due within the reminder window.</li><li>{% pill 'DUE TODAY' %} repayment date is today.</li><li>{% pill 'DEFAULTER' %} 1 or more days past the repayment date and a balance remains.</li><li>{% pill 'SEVERE DEFAULT' %} at least the severe-default days late.</li><li>{% pill 'Paid' %} status is Completed, or the amount paid covers principal plus interest.</li><li>{% pill 'CHECK DATE' %} the repayment date is missing or outside 2020-2030.</li></ul><p class="note" style="margin-bottom:0">Outstanding = total due − amount paid. Penalties are recorded but not included.</p></div>
+{% endblock %}

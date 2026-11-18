@@ -1,0 +1,10 @@
+{% extends "desk/base.html" %}
+{% block title %}Activity log · Roziko Loan Desk{% endblock %}
+{% block content %}
+<form class="filters" method="get" style="margin-top:14px"><div class="f wide"><label for="aq">Search user, action or record</label><input id="aq" type="search" name="q" value="{{ q }}"></div><div class="f"><button class="btn" type="submit">Search</button></div></form>
+<div class="tbl"><table><thead><tr><th>When</th><th>User</th><th>Action</th><th>Record</th><th>Detail</th></tr></thead><tbody>
+{% for a in page %}<tr><td>{{ a.created_at|date:"d M Y H:i" }}</td><td>{{ a.user_name|default:"-" }}</td><td>{{ a.action }}</td><td style="white-space:normal">{{ a.object_type }} {{ a.object_repr }}</td><td style="white-space:normal;min-width:260px">{{ a.detail }}</td></tr>
+{% empty %}<tr><td colspan="5"><div class="empty" style="border:0">Nothing logged yet.</div></td></tr>{% endfor %}
+</tbody></table></div>
+{% include "desk/_pager.html" with noun="entries" total=page.paginator.count %}
+{% endblock %}

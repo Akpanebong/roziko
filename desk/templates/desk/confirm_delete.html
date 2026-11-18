@@ -1,0 +1,15 @@
+{% extends "desk/base.html" %}
+{% load desk_extras %}
+{% block title %}Confirm delete · Roziko Loan Desk{% endblock %}
+{% block content %}
+<div class="card" style="max-width:560px;margin-top:20px;display:grid;gap:10px">
+  <h2>Delete {{ what }}?</h2>
+  {% if blocked %}<div class="msg error">{{ blocked }}</div>{% else %}
+  <p style="margin:0">This cannot be undone. A record of the deletion is kept in the activity log.</p>
+  {% if extra %}<p class="note" style="margin:0">{{ extra }}</p>{% endif %}
+  {% if x %}<p class="note" style="margin:0">Outstanding balance: <b class="num">{{ x.out|money }}</b> UGX · Paid: <b class="num">{{ x.paid|money }}</b> UGX</p>{% endif %}{% endif %}
+  <form method="post" class="toolbar">{% csrf_token %}
+    {% if not blocked %}<button class="btn danger" type="submit">Yes, delete</button>{% endif %}
+    <a class="btn alt" href="{{ cancel }}">{% if blocked %}Back{% else %}Cancel{% endif %}</a></form>
+</div>
+{% endblock %}

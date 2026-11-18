@@ -1,0 +1,34 @@
+{% extends "desk/base.html" %}
+{% load desk_extras %}
+{% block title %}Recommendations · Roziko Loan Desk{% endblock %}
+{% block content %}
+<div class="sec" style="margin-top:18px"><h2>Recommendations</h2>
+  <div class="toolbar"><a class="btn sm {% if status == 'all' %}{% else %}alt{% endif %}" href="?status=all">All</a>
+    <a class="btn sm {% if status == 'open' %}{% else %}alt{% endif %}" href="?status=open">Open</a>
+    <a class="btn sm {% if status == 'reviewed' %}{% else %}alt{% endif %}" href="?status=reviewed">Reviewed</a></div></div>
+
+{% if 'add_recommendation' in P %}
+<details class="mini" style="margin-bottom:14px"><summary>Make a general recommendation</summary>
+  <form method="post" action="{% url 'recommendation_add' %}">{% csrf_token %}
+    <div class="fld"><label for="id_title">Title</label>{{ form.title }}</div>
+    <div class="fld"><label for="id_text">Recommendation</label>{{ form.text }}</div>
+    <button class="btn sm" type="submit">Save recommendation</button></form>
+  <p class="note" style="margin:6px 0 0">To make a recommendation about one loan, open that loan from the Loans page.</p></details>
+{% endif %}
+
+<div class="stack">
+{% for r in page %}
+<article class="rcard {{ r.status }}">
+  <h3>{{ r.title }}</h3>
+  <div class="note">{{ r.by.display_name|default:"(removed user)" }} · {{ r.created_at|date:"d M Y H:i" }} · {{ r.get_status_display }}{% if r.reviewed_by %} ({{ r.reviewed_by.display_name }}){% endif %}
+    {% if r.loan %} · <a href="{{ r.loan.get_absolute_url }}">{{ r.loan.client_name }}</a>{% else %} · General{% endif %}</div>
+  <p>{{ r.text }}</p>
+  <div class="toolbar">
+    {% if 'review_recommendations' in P %}<form class="inline" method="post" action="{% url 'recommendation_toggle' r.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="btn alt sm" type="submit">{% if r.status == 'open' %}Mark reviewed{% else %}Re-open{% endif %}</button></form>{% endif %}
+    {% if 'review_recommendations' in P or r.by_id == user.pk %}<a class="btn alt sm danger" href="{% url 'recommendation_delete' r.pk %}">Delete</a>{% endif %}
+  </div>
+</article>
+{% empty %}<div class="empty">No recommendations yet.</div>{% endfor %}
+</div>
+{% if page.paginator.num_pages > 1 %}{% include "desk/_pager.html" with noun="recommendations" total=page.paginator.count %}{% endif %}
+{% endblock %}

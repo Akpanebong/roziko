@@ -1,0 +1,52 @@
+{% extends "desk/base.html" %}
+{% load desk_extras %}
+{% block title %}Reminders · Roziko Loan Desk{% endblock %}
+{% block content %}
+<div class="alertbar{% if not n_alert %} ok{% endif %}" style="margin-top:14px"><span>{% if R.officer == 'All' %}All officers{% else %}{{ R.officer }}{% endif %}{% if R.branch != 'All' %} · {{ R.branch }}{% endif %}: {{ c.today.n }} due today · {{ c.soon.n }} due soon · {{ c.defl.n }} defaulters · {{ c.sev.n }} severe</span><span class="num">{{ today|date:"d M Y" }}</span></div>
+
+<form class="filters" method="get" data-autosubmit>
+  <div class="f"><label for="rView">Show</label><select id="rView" name="view">{% for v in views %}<option{% if v == R.view %} selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>
+  <div class="f"><label for="rBranch">Branch</label><select id="rBranch" name="branch"><option value="All">All</option><option{% if R.branch == 'Arua' %} selected{% endif %}>Arua</option><option{% if R.branch == 'Gulu' %} selected{% endif %}>Gulu</option></select></div>
+  <div class="f"><label for="rOff">Officer</label><select id="rOff" name="officer"><option value="All">All</option>{% for v in officers %}<option{% if v == R.officer %} selected{% endif %}>{{ v }}</option>{% endfor %}</select></div>
+  <div class="f wide"><label for="rQ">Search client or phone</label><input id="rQ" type="search" name="q" value="{{ R.q }}" placeholder="Type a name or number, press Enter"></div>
+  <div class="f toolbar"><button class="btn" type="submit">Search</button>{% if 'export' in P %}<a class="btn alt" href="{% url 'export_reminders' %}{% url_with page=None %}">Download (CSV)</a>{% endif %}</div>
+</form>
+<p class="note" style="margin:0 0 10px">Ordered by urgency: due today, then defaulters (longest overdue first), then due soon, then severe defaults.{% if user.officer_id %} Your own clients are shown by default; choose “All” in Officer to see everyone.{% endif %}</p>
+
+<div class="rem">
+{% for l in page %}{% with x=l.x %}
+<article class="rc c-{{ x.flag_class }}">
+  <div>
+    <h3><a class="nmlink" href="{{ l.get_absolute_url }}">{{ l.client_name }}</a></h3>
+    <div class="meta">{{ l.branch_name }} · {{ x.officer }} · due {{ x.due|date:"d M Y" }} · {{ x.late_text }}</div>
+    <div class="amt num" style="margin:6px 0">{{ x.out|money }} <small class="note">UGX outstanding</small></div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">{% pill x.flag %}
+      {% if l.client_contact %}<span class="ph">Client {{ l.client_contact }} <button type="button" data-copy="{{ l.client_contact }}" aria-label="Copy {{ l.client_contact }}">copy</button></span>{% endif %}
+      {% if l.guarantor_contact %}<span class="ph">Guarantor {{ l.guarantor_contact }} <button type="button" data-copy="{{ l.guarantor_contact }}" aria-label="Copy {{ l.guarantor_contact }}">copy</button></span>{% endif %}</div>
+  </div>
+  <div>
+    <div class="act">{{ x.reco }}</div>
+    {% if l.last_fu %}<div class="meta" style="margin-top:6px">Last follow-up {{ l.last_fu.created_at|date:"d M Y" }}: {{ l.last_fu.outcome }}{% if l.last_fu.note %} - {{ l.last_fu.note }}{% endif %}{% if l.promise_active %} <span class="promise">Promised to pay {{ l.last_fu.promise_date|date:"d M Y" }}</span>{% endif %}</div>{% endif %}
+    <div class="ctl" style="margin-top:8px"><a class="btn sm alt" href="{{ l.get_absolute_url }}">Details</a></div>
+    {% if 'log_followup' in P %}
+    <details class="mini" style="margin-top:8px"><summary>Log follow-up</summary>
+      <form method="post" action="{% url 'followup_add' l.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <select class="in" name="outcome" aria-label="Outcome">{% for o in outcomes %}<option>{{ o }}</option>{% endfor %}</select>
+        <input class="in" type="date" name="promise_date" aria-label="Promised pay date" title="Promised pay date (optional)">
+        <textarea class="in" name="note" rows="2" placeholder="What was agreed?" aria-label="Note"></textarea>
+        <button class="btn sm" type="submit">Save follow-up</button></form></details>
+    {% endif %}
+    {% if 'add_payment' in P %}
+    <details class="mini" style="margin-top:8px"><summary>Record payment</summary>
+      <form method="post" action="{% url 'payment_add' l.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <input class="in" type="number" name="amount" min="1" step="1" required value="{{ x.out }}" aria-label="Amount received (UGX)">
+        <input class="in" type="date" name="paid_on" required value="{{ today|date:'Y-m-d' }}" aria-label="Date received">
+        <input class="in" type="text" name="receipt_no" placeholder="Voucher / receipt no." aria-label="Receipt number">
+        <button class="btn sm" type="submit">Save payment</button></form></details>
+    {% endif %}
+  </div>
+</article>
+{% endwith %}{% empty %}<div class="empty">Nothing to follow up for this selection today.</div>{% endfor %}
+</div>
+{% if page.paginator.num_pages > 1 %}{% include "desk/_pager.html" with noun="reminders" %}{% else %}<div class="note" style="text-align:center;margin-top:10px">Showing {{ total }}</div>{% endif %}
+{% endblock %}

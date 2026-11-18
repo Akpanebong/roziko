@@ -1,0 +1,86 @@
+{% extends "desk/base.html" %}
+{% load desk_extras %}
+{% block title %}{{ loan.client_name }} · Roziko Loan Desk{% endblock %}
+{% block content %}
+<div class="sec" style="margin-top:18px"><div><h2 style="font-size:20px;text-transform:none;letter-spacing:0;color:var(--ink)">{{ loan.client_name }}</h2>
+  <small>{{ branch_name }} · {{ x.officer }}</small></div>
+  <div class="toolbar"><a class="btn alt sm" href="{% url 'loan_list' %}">&larr; All loans</a>
+    {% if 'edit_loan' in P %}<a class="btn alt sm" href="{% url 'loan_edit' loan.pk %}">Edit loan</a>{% endif %}
+    {% if 'delete_loan' in P %}<a class="btn alt sm danger" href="{% url 'loan_delete' loan.pk %}">Delete loan</a>{% endif %}</div></div>
+<div style="margin:8px 0">{% pill x.flag %} {% if x.days is not None %}<span class="note">{{ x.late_text }}</span>{% endif %}</div>
+<div class="act-box" style="margin-bottom:14px">{{ x.reco }}</div>
+
+<div class="detail">
+  <div class="stack">
+    <div class="card"><h3>Loan details</h3>
+      <dl class="kv">
+        <dt>Branch</dt><dd>{{ branch_name }}</dd>
+        {% if loan.serial_no %}<dt>Serial no.</dt><dd>{{ loan.serial_no }}</dd>{% endif %}
+        <dt>Officer</dt><dd>{{ x.officer }}</dd>
+        <dt>Date issued</dt><dd>{% if x.issued %}{{ x.issued|date:"d M Y" }}{% else %}Missing or invalid{% endif %}</dd>
+        <dt>Repayment date</dt><dd>{% if x.due %}{{ x.due|date:"d M Y" }}{% else %}Missing or invalid{% endif %}</dd>
+        <dt>Principal</dt><dd class="num">{{ loan.principal|money }}</dd>
+        <dt>Interest</dt><dd class="num">{{ loan.interest|money }}</dd>
+        <dt>Total due (P+I)</dt><dd class="num">{{ x.td|money }}</dd>
+        {% if loan.processing_fee %}<dt>Processing fee</dt><dd class="num">{{ loan.processing_fee|money }}</dd>{% endif %}
+        <dt>Amount paid</dt><dd class="num">{{ x.paid|money }}</dd>
+        <dt>Outstanding</dt><dd class="num"><b>{{ x.out|money }}</b></dd>
+        {% if loan.penalty %}<dt>Penalty (recorded)</dt><dd class="num">{{ loan.penalty|money }}</dd>{% endif %}
+        <dt>Client contact</dt><dd>{{ loan.client_contact|default:"-" }}</dd>
+        <dt>Guarantor</dt><dd>{{ loan.guarantor_contact|default:"-" }}</dd>
+        <dt>Status</dt><dd>{{ x.status }}</dd>
+        <dt>Loan type / details</dt><dd>{{ loan.loan_type|default:"-" }}</dd>
+        {% if loan.remarks %}<dt>Remarks</dt><dd>{{ loan.remarks }}</dd>{% endif %}
+        {% if loan.receipt_no %}<dt>Receipt no.</dt><dd>{{ loan.receipt_no }}</dd>{% endif %}
+        {% if loan.received_by %}<dt>Received by</dt><dd>{{ loan.received_by }}</dd>{% endif %}
+        {% if loan.payment_date_text %}<dt>Payment date (as entered)</dt><dd>{{ loan.payment_date_text }}</dd>{% endif %}
+        {% if loan.import_note %}<dt>Import note</dt><dd>{{ loan.import_note }}</dd>{% endif %}
+      </dl></div>
+    <div class="card"><h3>History</h3>
+      {% if history %}<ul class="hist">{% for when, who, text in history %}<li>{{ text }}<small>{{ who }}{% if who %} · {% endif %}{{ when|date:"d M Y H:i" }}</small></li>{% endfor %}</ul>{% else %}<div class="note">No activity yet.</div>{% endif %}</div>
+  </div>
+
+  <div class="stack">
+    <div class="card"><h3>Payments</h3>
+      {% if loan.amount_received %}<p class="note" style="margin:0 0 8px">Carried over from the Excel tracker: <span class="num">{{ loan.amount_received|money }}</span> UGX</p>{% endif %}
+      <ul class="plist">{% for p in payments %}
+        <li><span><b class="num">{{ p.amount|money }}</b> UGX · {{ p.paid_on|date:"d M Y" }}{% if p.receipt_no %} · receipt {{ p.receipt_no }}{% endif %}<br><small class="note">{{ p.recorded_by.display_name|default:"" }}</small></span>
+          {% if 'delete_payment' in P %}<a class="btn alt sm danger" href="{% url 'payment_delete' p.pk %}">Delete</a>{% endif %}</li>
+      {% empty %}<li class="note">No payments recorded in this system yet.</li>{% endfor %}</ul>
+      {% if 'add_payment' in P %}
+      <details class="mini" style="margin-top:10px" {% if x.out %}open{% endif %}><summary>Record payment</summary>
+        <form method="post" action="{% url 'payment_add' loan.pk %}">{% csrf_token %}
+          <div class="fld"><label for="id_amount">Amount received (UGX)</label>{{ pay_form.amount }}</div>
+          <div class="fld"><label for="id_paid_on">Date received</label>{{ pay_form.paid_on }}</div>
+          <div class="fld"><label for="id_receipt_no">Voucher / receipt no.</label>{{ pay_form.receipt_no }}</div>
+          <button class="btn sm" type="submit">Save payment</button></form></details>
+      {% endif %}</div>
+
+    {% if 'log_followup' in P or loan.followups.exists %}
+    <div class="card"><h3>Follow-ups</h3>
+      <ul class="plist">{% for f in loan.followups.all %}<li style="display:block"><b>{{ f.outcome }}</b>{% if f.promise_date %} · promised {{ f.promise_date|date:"d M Y" }}{% endif %}{% if f.note %}<br>{{ f.note }}{% endif %}<br><small class="note">{{ f.by.display_name|default:"" }} · {{ f.created_at|date:"d M Y H:i" }}</small></li>{% empty %}<li class="note">None logged.</li>{% endfor %}</ul>
+      {% if 'log_followup' in P %}
+      <details class="mini" style="margin-top:10px"><summary>Log follow-up</summary>
+        <form method="post" action="{% url 'followup_add' loan.pk %}">{% csrf_token %}
+          <div class="fld"><label for="id_outcome">Outcome</label>{{ fu_form.outcome }}</div>
+          <div class="fld"><label for="id_promise_date">Promised pay date</label>{{ fu_form.promise_date }}</div>
+          <div class="fld"><label for="id_note">Note</label>{{ fu_form.note }}</div>
+          <button class="btn sm" type="submit">Save follow-up</button></form></details>
+      {% endif %}</div>
+    {% endif %}
+
+    {% if 'view_recommendations' in P %}
+    <div class="card"><h3>Recommendations</h3>
+      {% for r in recs %}<div class="rcard {{ r.status }}" style="margin-bottom:8px"><h3>{{ r.title }}</h3><div class="note">{{ r.by.display_name|default:"" }} · {{ r.created_at|date:"d M Y" }} · {{ r.get_status_display }}</div><p>{{ r.text }}</p></div>
+      {% empty %}<div class="note">No recommendations for this loan.</div>{% endfor %}
+      {% if 'add_recommendation' in P %}
+      <details class="mini" style="margin-top:10px"><summary>Make a recommendation</summary>
+        <form method="post" action="{% url 'loan_recommend' loan.pk %}">{% csrf_token %}
+          <div class="fld"><label for="id_title">Title</label>{{ rec_form.title }}</div>
+          <div class="fld"><label for="id_text">Recommendation</label>{{ rec_form.text }}</div>
+          <button class="btn sm" type="submit">Save recommendation</button></form></details>
+      {% endif %}</div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

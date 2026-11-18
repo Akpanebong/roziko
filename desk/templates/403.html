@@ -1,0 +1,7 @@
+{% extends "desk/base.html" %}
+{% block title %}Not allowed · Roziko Loan Desk{% endblock %}
+{% block content %}
+<div class="empty" style="margin-top:20px"><h2>You do not have access to that page</h2>
+<p>Your role{% if role_label %} (<b>{{ role_label }}</b>){% endif %} is not allowed to do this. Ask a Branch Manager if you think this is a mistake.</p>
+<p><a class="btn" href="/">Back to the dashboard</a></p></div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "desk/base.html" %}
+{% block title %}{{ title }} · Roziko Loan Desk{% endblock %}
+{% block content %}
+<div class="sec"><h2>{{ title }}</h2><small>{% if loan %}Changes are recorded in the activity log{% else %}Interest and repayment date are filled in for you and can be changed{% endif %}</small></div>
+<form method="post" class="card grid centered-form" novalidate>{% csrf_token %}
+  {{ form.non_field_errors }}
+  {% include "desk/_field.html" with field=form.branch %}{% include "desk/_field.html" with field=form.officer_name %}
+  {% include "desk/_field.html" with field=form.client_name full=True %}{% include "desk/_field.html" with field=form.date_issued %}{% include "desk/_field.html" with field=form.due_date %}
+  {% include "desk/_field.html" with field=form.principal %}{% include "desk/_field.html" with field=form.interest %}{% include "desk/_field.html" with field=form.processing_fee %}{% include "desk/_field.html" with field=form.total_due %}
+  {% include "desk/_field.html" with field=form.client_contact %}{% include "desk/_field.html" with field=form.guarantor_contact %}{% include "desk/_field.html" with field=form.loan_type full=True %}
+  {% if form.status %}{% include "desk/_field.html" with field=form.status %}{% include "desk/_field.html" with field=form.amount_received %}{% include "desk/_field.html" with field=form.penalty %}{% include "desk/_field.html" with field=form.remarks %}{% endif %}
+  <div class="full toolbar"><button class="btn" type="submit">Save loan</button><a class="btn alt" href="{% if loan %}{{ loan.get_absolute_url }}{% else %}{% url 'loan_list' %}{% endif %}">Cancel</a></div>
+</form>
+<datalist id="officers-A">{% for n in officer_lists.A %}<option value="{{ n }}">{% endfor %}</datalist><datalist id="officers-G">{% for n in officer_lists.G %}<option value="{{ n }}">{% endfor %}</datalist><datalist id="officers-ALL">{% for n in officer_lists.ALL %}<option value="{{ n }}">{% endfor %}</datalist><datalist id="loan-types">{% for t in loan_types %}<option value="{{ t }}">{% endfor %}</datalist>
+{{ js_settings|json_script:"loan-settings" }}
+{% endblock %}

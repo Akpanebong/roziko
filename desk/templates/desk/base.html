@@ -1,0 +1,57 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>{% block title %}Roziko Loan Desk{% endblock %}</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="{% static 'desk/css/app.css' %}">
+  <link rel="icon" href="{% static 'desk/images/logo.png' %}">
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brandrow">
+      <div class="brand">
+        <img  style="background-color: white; border-radius: 20px" class="brand-logo" src="{% static 'desk/images/logo.png' %}" alt="Roziko Financial Services logo">
+        <span class="brand-copy"><b>Roziko Loan Desk</b><span>Roziko Financial Services Ltd &middot; Arua and Gulu branches</span></span>
+      </div>
+      {% if user.is_authenticated %}
+      <div class="top-actions">
+        <span class="today">{{ today|date:"l j F Y" }}</span>
+        <details class="user-menu">
+          <summary class="user-trigger" aria-label="Open user menu">
+            <span class="whoami"><b>{{ user.display_name }}</b><span class="pill role">{{ role_label }}</span></span>
+          </summary>
+          <div class="user-dropdown">
+            <a class="btn alt sm" href="{% url 'password_change' %}">Password</a>
+            <form class="inline" method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn alt sm" type="submit">Sign out</button></form>
+          </div>
+        </details>
+      </div>
+      {% endif %}
+    </div>
+    {% if user.is_authenticated %}
+    {% with n=request.resolver_match.url_name %}
+    <nav aria-label="Sections">
+      <a href="{% url 'dashboard' %}" {% if n == 'dashboard' %}aria-current="page"{% endif %}>Dashboard</a>
+      <a href="{% url 'reminders' %}" {% if n == 'reminders' %}aria-current="page"{% endif %}>Reminders{% if alert_badge %}<span class="badge">{{ alert_badge }}</span>{% endif %}</a>
+      <a href="{% url 'loan_list' %}" {% if n == 'loan_list' or n == 'loan_detail' or n == 'loan_edit' or n == 'loan_delete' %}aria-current="page"{% endif %}>Loans</a>
+      {% if 'add_loan' in P %}<a href="{% url 'loan_add' %}" {% if n == 'loan_add' %}aria-current="page"{% endif %}>Add loan</a>{% endif %}
+      {% if 'view_recommendations' in P %}<a href="{% url 'recommendation_list' %}" {% if n == 'recommendation_list' %}aria-current="page"{% endif %}>Recommendations</a>{% endif %}
+      {% if 'manage_users' in P %}<a href="{% url 'user_list' %}" {% if n == 'user_list' or n == 'user_add' or n == 'user_edit' or n == 'user_password' or n == 'user_delete' %}aria-current="page"{% endif %}>Users</a>
+      {% elif 'create_users' in P %}<a href="{% url 'user_add' %}" {% if n == 'user_add' %}aria-current="page"{% endif %}>Add user</a>{% endif %}
+      {% if 'settings' in P %}<a href="{% url 'site_settings' %}" {% if n == 'site_settings' %}aria-current="page"{% endif %}>Settings</a>{% endif %}
+      {% if 'view_audit' in P %}<a href="{% url 'audit_log' %}" {% if n == 'audit_log' %}aria-current="page"{% endif %}>Activity log</a>{% endif %}
+    </nav>
+    {% endwith %}
+    {% endif %}
+  </header>
+  {% if messages %}<div class="msgs">{% for m in messages %}<div class="msg {{ m.tags }}" role="status">{{ m }}</div>{% endfor %}</div>{% endif %}
+  <main>{% block content %}{% endblock %}</main>
+</div>
+<script src="{% static 'desk/js/app.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
