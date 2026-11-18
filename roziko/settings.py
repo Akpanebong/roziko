@@ -75,10 +75,32 @@ TEMPLATES = [{
 
 WSGI_APPLICATION = "roziko.wsgi.application"
 
-DATABASES = {"default": {
-    "ENGINE": "django.db.backends.sqlite3",
-    "NAME": os.environ.get("DJANGO_DB_PATH", str(BASE_DIR / "db.sqlite3")),
-}}
+# DATABASES = {"default": {
+#     "ENGINE": "django.db.backends.sqlite3",
+#     "NAME": os.environ.get("DJANGO_DB_PATH", str(BASE_DIR / "db.sqlite3")),
+# }}
+
+# Database configuration
+db_path = Path(
+    os.environ.get(
+        "DJANGO_DB_PATH",
+        str(BASE_DIR / "db.sqlite3")
+    )
+).expanduser()
+
+# Resolve relative database paths against BASE_DIR
+if not db_path.is_absolute():
+    db_path = BASE_DIR / db_path
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": str(db_path),
+        "OPTIONS": {
+            "timeout": 20,
+        },
+    }
+}
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
