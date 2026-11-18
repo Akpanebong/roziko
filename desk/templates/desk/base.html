@@ -21,6 +21,15 @@
       {% if user.is_authenticated %}
       <div class="top-actions">
         <span class="today">{{ today|date:"l j F Y" }}</span>
+        <details class="settings-menu">
+          <summary class="settings-trigger" aria-label="Open settings menu" title="Settings">&#9881;</summary>
+          <div class="settings-dropdown">
+            {% if 'manage_users' in P %}<a href="{% url 'user_list' %}">Users</a>
+            {% elif 'create_users' in P %}<a href="{% url 'user_add' %}">Add user</a>{% endif %}
+            {% if 'settings' in P %}<a href="{% url 'site_settings' %}">Settings</a>{% endif %}
+            {% if 'view_audit' in P %}<a href="{% url 'audit_log' %}">Activity log</a>{% endif %}
+          </div>
+        </details>
         <details class="user-menu">
           <summary class="user-trigger" aria-label="Open user menu">
             <span class="whoami"><b>{{ user.display_name }}</b><span class="pill role">{{ role_label }}</span></span>
@@ -41,10 +50,6 @@
       <a href="{% url 'loan_list' %}" {% if n == 'loan_list' or n == 'loan_detail' or n == 'loan_edit' or n == 'loan_delete' %}aria-current="page"{% endif %}>Loans</a>
       {% if 'add_loan' in P %}<a href="{% url 'loan_add' %}" {% if n == 'loan_add' %}aria-current="page"{% endif %}>Add loan</a>{% endif %}
       {% if 'view_recommendations' in P %}<a href="{% url 'recommendation_list' %}" {% if n == 'recommendation_list' %}aria-current="page"{% endif %}>Recommendations</a>{% endif %}
-      {% if 'manage_users' in P %}<a href="{% url 'user_list' %}" {% if n == 'user_list' or n == 'user_add' or n == 'user_edit' or n == 'user_password' or n == 'user_delete' %}aria-current="page"{% endif %}>Users</a>
-      {% elif 'create_users' in P %}<a href="{% url 'user_add' %}" {% if n == 'user_add' %}aria-current="page"{% endif %}>Add user</a>{% endif %}
-      {% if 'settings' in P %}<a href="{% url 'site_settings' %}" {% if n == 'site_settings' %}aria-current="page"{% endif %}>Settings</a>{% endif %}
-      {% if 'view_audit' in P %}<a href="{% url 'audit_log' %}" {% if n == 'audit_log' %}aria-current="page"{% endif %}>Activity log</a>{% endif %}
     </nav>
     {% endwith %}
     {% endif %}

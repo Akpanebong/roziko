@@ -7,6 +7,44 @@
     f.addEventListener('change', e => { if (e.target.matches('select, input[type=date]')) f.submit(); });
   });
 
+  // dashboard detail tabs
+  const dashboardTabs = $$('[data-dashboard-tab]');
+  const dashboardPanels = $$('[data-dashboard-panel]');
+  if (dashboardTabs.length && dashboardPanels.length) {
+    const showDashboardPanel = key => {
+      dashboardTabs.forEach(tab => {
+        const selected = tab.dataset.dashboardTab === key;
+        tab.setAttribute('aria-selected', selected ? 'true' : 'false');
+        tab.tabIndex = selected ? 0 : -1;
+      });
+      dashboardPanels.forEach(panel => {
+        panel.hidden = panel.dataset.dashboardPanel !== key;
+      });
+    };
+    dashboardTabs.forEach(tab => tab.addEventListener('click', () => showDashboardPanel(tab.dataset.dashboardTab)));
+  }
+
+  // count attention KPIs up from zero when the dashboard opens
+  $$('[data-count-to]').forEach(el => {
+    const target = Number(el.dataset.countTo);
+    if (!Number.isFinite(target)) return;
+    const format = value => Math.round(value).toLocaleString('en-US');
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      el.textContent = format(target);
+      return;
+    }
+    const started = performance.now();
+    const duration = 1200;
+    const tick = now => {
+      const progress = Math.min((now - started) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = format(target * eased);
+      if (progress < 1) requestAnimationFrame(tick);
+    };
+    el.textContent = format(0);
+    requestAnimationFrame(tick);
+  });
+
   // clickable table rows
   document.addEventListener('click', e => {
     if (e.target.closest('a, button, input, select, textarea')) return;

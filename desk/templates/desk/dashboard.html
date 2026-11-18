@@ -23,7 +23,7 @@
 <div class="sec"><h2>Portfolio snapshot</h2><small>Responds to every filter</small></div>
 <div class="tiles">
   {% include "desk/_tile.html" with l="Loans" v=n_loans s="matching filters" %}
-  {% include "desk/_tile.html" with l="Principal issued" v=P|money s="UGX disbursed" %}
+  {% include "desk/_tile.html" with l="Principal issued" v=principal_issued|money s="UGX disbursed" %}
   {% include "desk/_tile.html" with l="Total due (P+I)" v=TD|money s="UGX" %}
   {% include "desk/_tile.html" with l="Collected" v=PD|money s="UGX received" %}
   {% include "desk/_tile.html" with l="Outstanding" v=OUT|money s="UGX still to collect" %}
@@ -32,37 +32,52 @@
 
 <div class="sec"><h2>Today's position</h2><small>Branch and Officer filters only. Based on each repayment date against today.</small></div>
 <div class="tiles">
-  <div class="tile k-today"><div class="l">Due today</div><div class="v num">{{ c.today.n }}</div><div class="s">{{ c.today.out|money }} UGX to collect</div></div>
+  <div class="tile k-today kpi-attention"><div class="l">Due today</div><div class="v num" data-count-to="{{ c.today.n }}">{{ c.today.n }}</div><div class="s">{{ c.today.out|money }} UGX to collect</div></div>
   <div class="tile k-soon"><div class="l">Due soon</div><div class="v num">{{ c.soon.n }}</div><div class="s">next {{ window }} days: {{ c.soon.out|money }} UGX</div></div>
   <div class="tile k-def"><div class="l">Defaulters</div><div class="v num">{{ c.defl.n }}</div><div class="s">{{ c.defl.out|money }} UGX overdue</div></div>
-  <div class="tile k-sev"><div class="l">Severe defaults</div><div class="v num">{{ c.sev.n }}</div><div class="s">{{ severe }}+ days: {{ c.sev.out|money }} UGX</div></div>
+  <div class="tile k-sev kpi-attention"><div class="l">Severe defaults</div><div class="v num" data-count-to="{{ c.sev.n }}">{{ c.sev.n }}</div><div class="s">{{ severe }}+ days: {{ c.sev.out|money }} UGX</div></div>
   {% include "desk/_tile.html" with l="Amount at risk" v=at_risk|money s="UGX on all defaulters" %}
   {% include "desk/_tile.html" with l="Portfolio at risk" v=par s="at-risk / total outstanding" %}
 </div>
 
+<div class="dashboard-tabs" role="tablist" aria-label="Dashboard details">
+  <button type="button" role="tab" id="tab-reminders" aria-controls="panel-reminders" aria-selected="false" data-dashboard-tab="reminders">Today's collection reminders</button>
+  <button type="button" role="tab" id="tab-charts" aria-controls="panel-charts" aria-selected="false" data-dashboard-tab="charts">Charts</button>
+  <button type="button" role="tab" id="tab-officers" aria-controls="panel-officers" aria-selected="false" data-dashboard-tab="officers">Officer performance</button>
+  <button type="button" role="tab" id="tab-monthly" aria-controls="panel-monthly" aria-selected="false" data-dashboard-tab="monthly">Monthly portfolio summary</button>
+</div>
+
+<section class="dashboard-panel" id="panel-reminders" role="tabpanel" aria-labelledby="tab-reminders" data-dashboard-panel="reminders" hidden>
 <div class="sec"><h2>Today's collection reminders</h2><small>Showing {{ reminder_rows|length }} of {{ reminder_total }} actionable loans for the selected branch and officer</small></div>
 <div class="tbl"><table><thead><tr><th>Client</th><th>Branch</th><th>Officer</th><th>Contact</th><th>Due date</th><th class="r">Days late</th><th class="r">Outstanding (UGX)</th><th>Alert</th><th>Recommended action</th></tr></thead><tbody>
 {% for l in reminder_rows %}<tr data-href="{{ l.get_absolute_url }}"><td><a class="nmlink" href="{{ l.get_absolute_url }}">{{ l.client_name }}</a></td><td>{{ l.branch_name }}</td><td>{{ l.x.officer }}</td><td>{{ l.client_contact|default:"" }}</td><td>{% if l.x.due %}{{ l.x.due|date:"d M Y" }}{% else %}<span class="note">invalid</span>{% endif %}</td><td class="r num">{% if l.x.days is not None %}{{ l.x.days }}{% endif %}</td><td class="r num">{{ l.x.out|money }}</td><td>{% pill l.x.flag %}</td><td class="note">{{ l.x.reco }}</td></tr>
 {% empty %}<tr><td colspan="9"><div class="empty" style="border:0">No collection reminders for this selection.</div></td></tr>{% endfor %}
 </tbody></table></div>
+</section>
 
+<section class="dashboard-panel" id="panel-charts" role="tabpanel" aria-labelledby="tab-charts" data-dashboard-panel="charts" hidden>
 <div class="sec"><h2>Charts</h2><small>The month chart ignores the Month filter and the officer chart ignores the Officer filter</small></div>
 <div class="grid3">
   <div class="card" style="grid-column:1/-1"><h3>By month: principal, collected and outstanding</h3><div id="chart-month"></div></div>
   <div class="card"><h3>Outstanding balance by officer (UGX)</h3><div id="chart-officer"></div></div>
   <div class="card"><h3>Open loans by alert flag</h3><div id="chart-flags"></div></div>
 </div>
+</section>
 
+<section class="dashboard-panel" id="panel-officers" role="tabpanel" aria-labelledby="tab-officers" data-dashboard-panel="officers" hidden>
 <div class="sec"><h2>Officer performance</h2><small>Click a row to open that officer's reminders</small></div>
 <div class="tbl"><table><thead><tr><th>Officer</th><th class="r">Loans</th><th class="r">Principal (UGX)</th><th class="r">Outstanding (UGX)</th><th class="r">Defaulters</th><th class="r">Collection rate</th></tr></thead><tbody>
 {% for o in offs %}<tr data-href="{% url 'reminders' %}?officer={{ o.name|urlencode }}"><td><a class="nmlink" href="{% url 'reminders' %}?officer={{ o.name|urlencode }}">{{ o.name }}</a></td><td class="r num">{{ o.loans|money }}</td><td class="r num">{{ o.principal|money }}</td><td class="r num">{{ o.out|money }}</td><td class="r num">{{ o.defaulters|money }}</td><td class="r num">{{ o.rate|floatformat:1 }}%</td></tr>
 {% empty %}<tr><td colspan="6" class="note">No loans match.</td></tr>{% endfor %}
 </tbody></table></div>
+</section>
 
+<section class="dashboard-panel" id="panel-monthly" role="tabpanel" aria-labelledby="tab-monthly" data-dashboard-panel="monthly" hidden>
 <div class="grid3" style="margin-top:12px">
   <div class="card"><h3>Monthly portfolio summary</h3><div class="tbl"><table><thead><tr><th>Month</th><th class="r">Loans</th><th class="r">Principal</th><th class="r">Collected</th><th class="r">Outstanding</th></tr></thead><tbody>{% for m in month_rows %}<tr><td>{{ m.name }}</td><td class="r num">{{ m.loans }}</td><td class="r num">{{ m.principal|money }}</td><td class="r num">{{ m.collected|money }}</td><td class="r num">{{ m.outstanding|money }}</td></tr>{% endfor %}</tbody></table></div></div>
   <div class="card"><h3>Loans by alert flag</h3><div class="tbl"><table><thead><tr><th>Alert flag</th><th class="r">Loans</th><th class="r">Outstanding (UGX)</th></tr></thead><tbody>{% for f in flag_rows %}<tr><td>{% pill f.name %}</td><td class="r num">{{ f.loans }}</td><td class="r num">{{ f.outstanding|money }}</td></tr>{% empty %}<tr><td colspan="3" class="note">No loans match.</td></tr>{% endfor %}</tbody></table></div></div>
 </div>
+</section>
 
 {% if show_alert %}
 <dialog class="alert" id="daily-alert" aria-label="Today's reminders">

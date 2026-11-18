@@ -161,7 +161,7 @@ def dashboard(request):
     ctx = {
         "F": F, "years": sorted({str(l.x.yr) for l in loans if l.x.yr}), "months": rules.MONTHS,
         "officers": officer_names(loans), "flags": rules.FLAGS, "n_loans": len(sel),
-        "P": P, "TD": TD, "PD": PD, "OUT": OUT, "rate": f"{PD / TD * 100:.1f}%" if TD else "0.0%",
+        "principal_issued": P, "TD": TD, "PD": PD, "OUT": OUT, "rate": f"{PD / TD * 100:.1f}%" if TD else "0.0%",
         "c": c, "at_risk": at_risk, "par": f"{at_risk / tot_out * 100:.1f}%" if tot_out else "0.0%",
         "act": act, "window": s_.reminder_window_days, "severe": s_.severe_default_days,
         "offs": offs, "chart_json": chart, "show_alert": show_alert and me and me["total"], "me": me,
