@@ -44,47 +44,52 @@ class RoleAccessTests(TestCase):
                 self.assertEqual(self.status(u, name), 200, (u.username, name))
             self.assertEqual(self.status(u, "loan_detail", [self.loan.pk]), 200)
 
-    def test_add_loan_only_cashier_and_manager(self):
+    def test_add_loan_cashier_manager_and_advisor(self):
         self.assertEqual(self.status(self.cashier, "loan_add"), 200)
         self.assertEqual(self.status(self.manager, "loan_add"), 200)
+        self.assertEqual(self.status(self.advisor, "loan_add"), 200)
         self.assertEqual(self.status(self.officer_user, "loan_add"), 403)
-        self.assertEqual(self.status(self.advisor, "loan_add"), 403)
 
     def test_delete_loan(self):
         self.assertEqual(self.status(self.officer_user, "loan_delete", [self.loan.pk]), 403)
-        self.assertEqual(self.status(self.advisor, "loan_delete", [self.loan.pk]), 403)
+        self.assertEqual(self.status(self.advisor, "loan_delete", [self.loan.pk]), 200)
         self.client.force_login(self.cashier)
         r = self.client.post(reverse("loan_delete", args=[self.loan.pk]))
         self.assertEqual(r.status_code, 302)
         self.assertFalse(Loan.objects.filter(pk=self.loan.pk).exists())
 
-    def test_edit_loan_manager_only(self):
-        for u in (self.cashier, self.officer_user, self.advisor):
+    def test_edit_loan_officer_denied(self):
+        self.assertEqual(self.status(self.officer_user, "loan_edit", [self.loan.pk]), 403)
+        for u in (self.cashier, self.manager, self.advisor):
+            self.assertEqual(self.status(u, "loan_edit", [self.loan.pk]), 200)
+
+    def test_everyone_can_export(self):
+        for u in (self.cashier, self.officer_user, self.manager, self.advisor):
+            self.assertEqual(self.status(u, "export_loans"), 200)
+
+    def test_everyone_can_recommend_and_review(self):
+        for u in (self.cashier, self.officer_user, self.manager, self.advisor):
+            self.assertEqual(self.status(u, "recommendation_list"), 200)
+
+    def test_everyone_can_follow_up(self):
+        for u in (self.cashier, self.officer_user, self.manager, self.advisor):
+            self.assertEqual(self.status(u, "followup_add", [self.loan.pk], "post",
+                                         {"outcome": "No answer", "note": "phone off"}), 302)
+
+    def test_branch_manager_cannot_manage_users(self):
+        self.assertEqual(self.status(self.manager, "user_list"), 403)
+        self.assertEqual(self.status(self.manager, "user_add"), 403)
+        self.assertEqual(self.status(self.advisor, "user_list"), 200)
+
+    def test_advisor_can_change_settings_and_view_audit(self):
+        self.assertEqual(self.status(self.manager, "site_settings"), 200)
+        self.assertEqual(self.status(self.advisor, "site_settings"), 200)
+        self.assertEqual(self.status(self.manager, "audit_log"), 403)
+        self.assertEqual(self.status(self.advisor, "audit_log"), 200)
+
+    def test_officer_cannot_edit_loan(self):
+        for u in (self.officer_user,):
             self.assertEqual(self.status(u, "loan_edit", [self.loan.pk]), 403)
-        self.assertEqual(self.status(self.manager, "loan_edit", [self.loan.pk]), 200)
-
-    def test_export_advisor_and_manager_only(self):
-        self.assertEqual(self.status(self.advisor, "export_loans"), 200)
-        self.assertEqual(self.status(self.manager, "export_loans"), 200)
-        self.assertEqual(self.status(self.cashier, "export_loans"), 403)
-        self.assertEqual(self.status(self.officer_user, "export_loans"), 403)
-
-    def test_recommendations(self):
-        self.assertEqual(self.status(self.advisor, "recommendation_list"), 200)
-        self.assertEqual(self.status(self.cashier, "recommendation_list"), 403)
-        self.client.force_login(self.advisor)
-        r = self.client.post(reverse("loan_recommend", args=[self.loan.pk]),
-                             {"title": "Restructure", "text": "Offer a 2-month plan."})
-        self.assertEqual(r.status_code, 302)
-        self.assertEqual(self.loan.recommendations.count(), 1)
-        self.client.force_login(self.officer_user)
-        r = self.client.post(reverse("loan_recommend", args=[self.loan.pk]), {"title": "x", "text": "y"})
-        self.assertEqual(r.status_code, 403)
-
-    def test_followup_officer_yes_advisor_no(self):
-        data = {"outcome": "No answer", "note": "phone off"}
-        self.assertEqual(self.status(self.officer_user, "followup_add", [self.loan.pk], "post", data), 302)
-        self.assertEqual(self.status(self.advisor, "followup_add", [self.loan.pk], "post", data), 403)
 
     def test_payment_reduces_balance_and_delete(self):
         self.client.force_login(self.cashier)
@@ -100,17 +105,19 @@ class RoleAccessTests(TestCase):
         self.assertEqual(self.client.post(reverse("payment_delete", args=[p.pk])).status_code, 302)
         self.assertEqual(Payment.objects.count(), 0)
 
+    def test_advisor_can_record_payment(self):
+        self.assertEqual(self.status(self.advisor, "payment_add", [self.loan.pk], "post",
+                                     {"amount": 5, "paid_on": "2026-11-18"}), 302)
+
     def test_user_management(self):
-        self.assertEqual(self.status(self.manager, "user_list"), 200)
-        for u in (self.cashier, self.officer_user, self.advisor):
+        self.assertEqual(self.status(self.advisor, "user_list"), 200)
+        for u in (self.cashier, self.officer_user, self.manager):
             self.assertEqual(self.status(u, "user_list"), 403)
         self.assertEqual(self.status(self.advisor, "user_add"), 200)
-        self.assertEqual(self.status(self.manager, "user_add"), 200)
-        self.assertEqual(self.status(self.cashier, "user_add"), 403)
-        self.assertEqual(self.status(self.officer_user, "user_add"), 403)
+        for u in (self.cashier, self.officer_user, self.manager):
+            self.assertEqual(self.status(u, "user_add"), 403)
         self.assertEqual(self.status(self.cashier, "site_settings"), 403)
-        self.assertEqual(self.status(self.advisor, "audit_log"), 403)
-        self.assertEqual(self.status(self.manager, "audit_log"), 200)
+        self.assertEqual(self.status(self.advisor, "audit_log"), 200)
 
     def _new_user(self, creator, role, name="newbie"):
         self.client.force_login(creator)
@@ -118,20 +125,20 @@ class RoleAccessTests(TestCase):
             "username": name, "first_name": "New", "last_name": "User", "role": role, "branch": "",
             "password1": "Str0ng-pass-987", "password2": "Str0ng-pass-987"})
 
-    def test_advisor_can_add_users_but_not_managers(self):
+    def test_advisor_can_add_users_including_managers(self):
         r = self._new_user(self.advisor, Role.CASHIER)
         self.assertEqual(r.status_code, 302)
         self.assertTrue(User.objects.filter(username="newbie", role=Role.CASHIER).exists())
         r = self._new_user(self.advisor, Role.MANAGER, "sneaky")
-        self.assertEqual(r.status_code, 200)  # form re-shown with an error
-        self.assertFalse(User.objects.filter(username="sneaky").exists())
+        self.assertEqual(r.status_code, 302)
+        self.assertTrue(User.objects.filter(username="sneaky", role=Role.MANAGER).exists())
 
-    def test_manager_can_add_any_role(self):
+    def test_manager_cannot_add_users(self):
         for i, role in enumerate((Role.CASHIER, Role.OFFICER, Role.MANAGER, Role.ADVISOR)):
-            self.assertEqual(self._new_user(self.manager, role, f"u{i}").status_code, 302)
+            self.assertEqual(self._new_user(self.manager, role, f"u{i}").status_code, 403)
 
     def test_cannot_remove_last_manager(self):
-        self.client.force_login(self.manager)
+        self.client.force_login(self.advisor)
         self.assertEqual(self.client.post(reverse("user_delete", args=[self.manager.pk])).status_code, 200)
         self.assertTrue(User.objects.filter(pk=self.manager.pk).exists())
 

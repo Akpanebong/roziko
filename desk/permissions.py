@@ -38,21 +38,35 @@ PERMISSION_LABELS = {
 _VIEW = {"view_data"}
 
 ROLE_PERMS = {
-    # Cashier: enter data, delete and view.
-    CASHIER: _VIEW | {"add_loan", "add_payment", "delete_loan", "delete_payment"},
-    # Loans Officer: view client repayments and payment reminders (and log the follow-up).
-    OFFICER: _VIEW | {"log_followup"},
-    # Branch Manager: review everything, add users, delete data, etc.
-    MANAGER: set(PERMISSION_LABELS),
-    # Advisory Board: view, recommend, download and add users.
-    ADVISOR: _VIEW | {"view_recommendations", "add_recommendation", "export", "create_users"},
+    # The DOCX role matrix makes the Cashier an operational data-entry role,
+    # while still allowing the full recommendation and export workflow.
+    CASHIER: _VIEW | {
+        "add_loan", "add_payment", "delete_loan", "delete_payment", "log_followup",
+        "edit_loan", "view_recommendations", "add_recommendation",
+        "review_recommendations", "export",
+    },
+    # Loans Officers can work the reminder/recommendation workflow, but cannot
+    # change loan or payment records.
+    OFFICER: _VIEW | {
+        "log_followup", "view_recommendations", "add_recommendation",
+        "review_recommendations", "export",
+    },
+    # Branch Managers oversee branch operations and settings. User and audit
+    # administration belongs to the Advisory Board in the supplied matrix.
+    MANAGER: _VIEW | {
+        "add_loan", "add_payment", "delete_loan", "delete_payment", "log_followup",
+        "edit_loan", "view_recommendations", "add_recommendation",
+        "review_recommendations", "export", "settings",
+    },
+    # Advisory Board is the overall role: it receives every application
+    # permission, including user administration and the activity log.
+    ADVISOR: set(PERMISSION_LABELS),
 }
 
-# Which roles a user may assign when creating someone. The Advisory Board cannot
-# create Branch Managers (stops a privilege jump). Change here if you want otherwise.
+# Which roles a user may assign when creating someone. Only the overall role can
+# access user creation, and it may assign any application role.
 CREATABLE_ROLES = {
-    MANAGER: [CASHIER, OFFICER, MANAGER, ADVISOR],
-    ADVISOR: [CASHIER, OFFICER, ADVISOR],
+    ADVISOR: [CASHIER, OFFICER, MANAGER, ADVISOR],
 }
 
 

@@ -454,7 +454,7 @@ def followup_add(request, pk):
 
 
 # --------------------------------------------------------------------------
-# Recommendations (Advisory Board)
+# Recommendations
 # --------------------------------------------------------------------------
 @perm_required("view_recommendations")
 def recommendation_list(request):
@@ -598,8 +598,8 @@ def user_edit(request, pk):
     form = UserEditForm(request.POST or None, instance=u)
     if request.method == "POST" and form.is_valid():
         new_role, active = form.cleaned_data["role"], form.cleaned_data["is_active"]
-        if u.pk == request.user.pk and (not active or new_role != Role.MANAGER) and not u.is_superuser:
-            form.add_error(None, "You cannot remove your own manager access or deactivate yourself.")
+        if u.pk == request.user.pk and (not active or new_role != Role.ADVISOR) and not u.is_superuser:
+            form.add_error(None, "You cannot remove your own Advisory Board access or deactivate yourself.")
         elif (u.role == Role.MANAGER and (new_role != Role.MANAGER or not active)
               and not _other_active_managers(u.pk)):
             form.add_error(None, "There must be at least one active Branch Manager.")

@@ -33,24 +33,27 @@ python manage.py runserver
 ```
 
 `create_starter_users` prints a random password for `manager`, `cashier`, `officer` and `advisor`
-(shown once). Sign in as `manager`, add the real staff on the **Users** page, then delete or
-disable the starter accounts. To make your own first manager instead:
-`python manage.py createsuperuser` (superusers are Branch Managers).
+(shown once). Sign in as `advisor`, add the real staff on the **Users** page, then delete or
+disable the starter accounts. To make your own administrator instead:
+`python manage.py createsuperuser` (superusers have all application permissions).
 
 ## The four user levels
 
 | Permission | Cashier | Loans Officer | Branch Manager | Advisory Board |
 |---|:-:|:-:|:-:|:-:|
 | View dashboard, loans, reminders | yes | yes | yes | yes |
-| Enter new loans, record payments | yes | | yes | |
-| Delete loans and payments | yes | | yes | |
-| Log follow-ups on reminders | | yes | yes | |
-| Edit loan details | | | yes | |
-| Make recommendations | | | yes (review / delete) | yes |
-| View recommendations | | | yes | yes |
-| Download data (CSV) | | | yes | yes |
-| Add new users | | | yes (any level) | yes (not Branch Manager) |
-| Edit / reset / delete users, settings, activity log | | | yes | |
+| Enter new loans, record payments | yes | | yes | yes |
+| Delete loans and payments | yes | | yes | yes |
+| Log follow-ups on reminders | yes | yes | yes | yes |
+| Edit loan details | yes | | yes | yes |
+| Make recommendations | yes | yes | yes | yes |
+| View recommendations | yes | yes | yes | yes |
+| Mark recommendations reviewed / delete any | yes | yes | yes | yes |
+| Download data (CSV) | yes | yes | yes | yes |
+| Add new users | | | | yes (any level) |
+| Edit / reset / delete users | | | | yes |
+| Settings | | | yes | yes |
+| Activity log | | | | yes |
 
 The whole matrix lives in `desk/permissions.py` (one place to change it). It is also shown
 on the Users page. Every view checks it on the server, so hiding a button is never the only guard.
@@ -60,12 +63,12 @@ Choices I made where the brief was open (change them in `desk/permissions.py`):
 * **Loans Officers** can also log follow-ups on a reminder (call/visit outcome and promised date).
   They cannot enter payments or change loans. If an officer account is linked to a loan-officer
   name, their Reminders page opens on their own clients (they can switch to All).
-* **Advisory Board** can add users but cannot create Branch Managers, so the board cannot
-  promote anyone to manager. Set `CREATABLE_ROLES[ADVISOR]` to include `MANAGER` to allow it.
+* **Advisory Board** is the overall role and can administer users at every level, including
+  creating Branch Managers.
 * **Branch scope:** a user's Branch can be set to Arua or Gulu to show only that branch's data;
   leave it blank for both branches.
-* **Cashier** has no edit right (enter, delete, view only, as requested). A wrongly entered loan is
-  deleted and re-entered, or corrected by a Branch Manager.
+* **Branch Managers** can change settings and correct loan details, but user administration and
+  the activity log belong to the Advisory Board.
 
 ## Loan officer name: pick or type
 

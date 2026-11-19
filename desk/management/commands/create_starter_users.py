@@ -3,7 +3,7 @@ Create one starter account per role with a random password (printed once).
 
     python manage.py create_starter_users
 
-The first Branch Manager should then sign in, add real users from the Users page
+The Advisory Board user should then sign in, add real users from the Users page
 and delete or deactivate these starter accounts.
 """
 import secrets
